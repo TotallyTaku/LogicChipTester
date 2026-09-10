@@ -1,3 +1,7 @@
+// **********************************
+// * Structs and enums below        *
+// **********************************
+
 // struct to hold all output values of a 2-input logic chip
 struct TwoInputTruthTable {
   bool output00;
@@ -32,7 +36,7 @@ struct TwoInputGatePins{
 // Stores the pins for a 1-input gate layout chip
 struct OneInputGatePins{
   uint8_t inputPin;
-  uint8_t outputPin;;
+  uint8_t outputPin;
 };
 
 // Stores basic information about a quad 2-input chip 
@@ -42,11 +46,18 @@ struct QuadTwoInputChipConfig{
   TwoInputTruthTable expectedTruthTable;
 };
 
+// Stores basic information about a hex 1-input chip 
 struct HexOneInputChipConfig{
   const char* partNumber;
   const OneInputGatePins* gatePins;
   OneInputTruthTable expectedTruthTable;
 };
+
+
+// **********************************
+// * constant variables below       *
+// **********************************
+
 
 // Declaring constants for all avaialable pins to be used.
 const int PIN_13 = 13;
@@ -64,8 +75,8 @@ const int PIN_2 = 2;
 const int PIN_1 = 1;
 const int PIN_0 = 0;
 
-const int DELAY_TIME = 10;  // constant value in milliseconds to use in delays
-const int MAXIMUM_WAIT_TIME = 5000;
+const unsigned int DELAY_TIME = 10;  // constant value in microseconds to use in delays
+const int MAXIMUM_WAIT_TIME = 10000;
 
 // General Gates and their constant truth tables
 const TwoInputTruthTable EXPECTED_AND = { LOW, LOW, LOW, HIGH };
@@ -82,7 +93,7 @@ const TwoInputGatePins STANDARD_QUAD_2_INPUT_LAYOUT[4] = {
   {4, 3, 2}
 };
 
-const TwoInputGatePins SN74LS02_LAYOUT[4] = {
+const TwoInputGatePins SN74LS02N_LAYOUT[4] = {
   {12, 11, 13},
   {10, 9, 8},
   {6, 5, 7},
@@ -99,50 +110,73 @@ const OneInputGatePins STANDARD_HEX_1_INPUT_LAYOUT[6] = {
 };
 
 // **********************************
-// * Supported Chip Structs below     *
+// * Supported Chip Structs below   *
 // **********************************
 
 
-const QuadTwoInputChipConfig SN74LS00 = {
-  "SN74LS00",
+const QuadTwoInputChipConfig SN74LS00N = {
+  "SN74LS00N",
   STANDARD_QUAD_2_INPUT_LAYOUT,
   EXPECTED_NAND
 };
 
-const QuadTwoInputChipConfig SN74LS02 = {
-  "SN74LS02",
-  SN74LS02_LAYOUT,
+const QuadTwoInputChipConfig SN74LS02N = {
+  "SN74LS02N",
+  SN74LS02N_LAYOUT,
   EXPECTED_NOR
 };
 
-const HexOneInputChipConfig SN74LS05 = {
-  "SN74LS05",
+const HexOneInputChipConfig SN74LS05N = {
+  "SN74LS05N",
   STANDARD_HEX_1_INPUT_LAYOUT,
   EXPECTED_NOT
 };
 
-const QuadTwoInputChipConfig SN74LS08 = {
-  "SN74LS08",
+const QuadTwoInputChipConfig SN74LS08N = {
+  "SN74LS08N",
   STANDARD_QUAD_2_INPUT_LAYOUT,
   EXPECTED_AND
 };
 
-const QuadTwoInputChipConfig SN74LS32 = {
-  "SN74LS32",
+const QuadTwoInputChipConfig SN74LS32N = {
+  "SN74LS32N",
   STANDARD_QUAD_2_INPUT_LAYOUT,
   EXPECTED_OR
 };
 
-const QuadTwoInputChipConfig SN74LS86 = {
-  "SN74LS86",
+const QuadTwoInputChipConfig SN74LS86N = {
+  "SN74LS86N",
   STANDARD_QUAD_2_INPUT_LAYOUT,
   EXPECTED_XOR
 };
 
-const HexOneInputChipConfig SUPPORTED_HEX_ONE_INPUT_CHIPS[2] = {SN74LS05};
-const QuadTwoInputChipConfig SUPPORTED_QUAD_TWO_INPUT_CHIPS[8] = {
-  SN74LS00, SN74LS02, SN74LS08, SN74LS32, SN74LS86
+// Stores the possible types of chips to be called by Menu
+enum ChipType {
+  ONE_INPUT_CHIP,
+  TWO_INPUT_CHIP,
+  THREE_INPUT_CHIP,
+  FOUR_INTPUT_CHIP
 };
+
+// defines ChipConfiguration to be used in ChipMenuEntry struct as a variable
+union ChipConfiguration {
+  const HexOneInputChipConfig* oneInput;
+  const QuadTwoInputChipConfig* twoInput;
+  //ThreeInputChipConfig threeInput;
+  //FourInputChipConfig fourInput;
+};
+
+struct ChipMenuEntry {
+  const char* name;
+  enum ChipType ctype;
+  ChipConfiguration config;
+};
+
+
+
+// **********************************
+// * setup and loop functions below *
+// **********************************
 
 
 void setup(){
@@ -155,6 +189,11 @@ void setup(){
 // loop is EMPTY FOR NOWWWWWWW
 // =================================
 void loop() {
+  printMainMenu();
+
+
+
+
 }
 
 // **********************************
@@ -171,22 +210,22 @@ TwoInputTruthTable readTwoInputGate(int pinA, int pinB, int pinY) {
 
   digitalWrite(pinA, LOW);
   digitalWrite(pinB, LOW);
-  delay(DELAY_TIME);
+  delayMicroseconds(DELAY_TIME);
   result.output00 = digitalRead(pinY);
 
   digitalWrite(pinA, LOW);
   digitalWrite(pinB, HIGH);
-  delay(DELAY_TIME);
+  delayMicroseconds(DELAY_TIME);
   result.output01 = digitalRead(pinY);
 
   digitalWrite(pinA, HIGH);
   digitalWrite(pinB, LOW);
-  delay(DELAY_TIME);
+  delayMicroseconds(DELAY_TIME);
   result.output10 = digitalRead(pinY);
 
   digitalWrite(pinA, HIGH);
   digitalWrite(pinB, HIGH);
-  delay(DELAY_TIME);
+  delayMicroseconds(DELAY_TIME);
   result.output11 = digitalRead(pinY);
 
   return result;
@@ -213,11 +252,11 @@ OneInputTruthTable readOneInputGate(int pinA, int pinY) {
   OneInputTruthTable result;
 
   digitalWrite(pinA, LOW);
-  delay(DELAY_TIME);
+  delayMicroseconds(DELAY_TIME);
   result.output0 = digitalRead(pinY);
 
   digitalWrite(pinA, HIGH);
-  delay(DELAY_TIME);
+  delayMicroseconds(DELAY_TIME);
   result.output1 = digitalRead(pinY);
 
   return result;
@@ -236,6 +275,7 @@ HexOneInputMeasurements measureHexOneInputChip(const HexOneInputChipConfig& chip
   results.gates[3] = readOneInputGate(chip.gatePins[3].inputPin, chip.gatePins[3].outputPin);
   results.gates[4] = readOneInputGate(chip.gatePins[4].inputPin, chip.gatePins[4].outputPin);
   results.gates[5] = readOneInputGate(chip.gatePins[5].inputPin, chip.gatePins[5].outputPin);
+  
   return results;
 }
 
@@ -260,8 +300,8 @@ bool compareOneInputTruthTable(const OneInputTruthTable& actual, const OneInputT
 }
 
 /** Compares all 4 gates in a 2-input chip with all possible scenarios and returns true if it matches the expected results*/
-bool compareQuadTwoInputTruthTable(const QuadTwoInputMeasurements& actual, const TwoInputTruthTable& expected){
-  return compareTwoInputTruthTable(actual.gates[0], expected) &&
+bool compareQuadTwoInputTruthTable(const QuadTwoInputMeasurements& actual, const TwoInputTruthTable& expected){ 
+  return compareTwoInputTruthTable(actual.gates[0], expected) && 
          compareTwoInputTruthTable(actual.gates[1], expected) &&
          compareTwoInputTruthTable(actual.gates[2], expected) &&
          compareTwoInputTruthTable(actual.gates[3], expected);
@@ -305,7 +345,10 @@ void configureOneInputGatePins(const OneInputGatePins layout[6]) {
 
 // === Actual chips testing functions below ===
 
-
+/**
+Returns true if all gates in the parameter chip match the expected
+result of the expected truth tables.Tests Quad Two input chips
+*/
 bool testQuadTwoInputChip(const QuadTwoInputChipConfig& chip){
   
   configureTwoInputGatePins(chip.gatePins);
@@ -314,6 +357,11 @@ bool testQuadTwoInputChip(const QuadTwoInputChipConfig& chip){
   return compareQuadTwoInputTruthTable(actual, chip.expectedTruthTable);
 }
 
+
+/**
+Returns true if all gates in the parameter chip match the expected
+result of the expected truth tables.Tests Hex One input chips
+*/
 bool testHexOneInputChip(const HexOneInputChipConfig& chip){
   configureOneInputGatePins(chip.gatePins);
   HexOneInputMeasurements actual = measureHexOneInputChip(chip);
@@ -328,28 +376,28 @@ bool testHexOneInputChip(const HexOneInputChipConfig& chip){
 
 //Tests the hexa 1-input gate chip SN74LS05N(NOT), returns true if chip PASSED.
 bool test_SN74LS05N(){
-  return testHexOneInputChip(SN74LS05);
+  return testHexOneInputChip(SN74LS05N);
 }
 //Tests the Quad 2-input gate chip SN74LS00N(NAND), returns true if chip PASSED.
 bool test_SN74LS00N(){
-  return testQuadTwoInputChip(SN74LS00);
+  return testQuadTwoInputChip(SN74LS00N);
 }
 //Tests the Quad 2-input gate chip SN74LS02N(NOR), returns true if chip PASSED.
 bool test_SN74LS02N(){
-  return testQuadTwoInputChip(SN74LS02);
+  return testQuadTwoInputChip(SN74LS02N);
 }
 //Tests the Quad 2-input gate chip SN74LS08N(AND), returns true if chip PASSED.
 bool test_SN74LS08N(){
-  return testQuadTwoInputChip(SN74LS08);
+  return testQuadTwoInputChip(SN74LS08N);
 }
 //Tests the Quad 2-input gate chip SN74LS32N(OR), returns true if chip PASSED.
 bool test_SN74LS32N(){
-  return testQuadTwoInputChip(SN74LS32);
+  return testQuadTwoInputChip(SN74LS32N);
 }
 
 //Tests the Quad 2-input gate chip SN74LS86N(XOR), returns true if chip PASSED.
 bool test_SN74LS86N(){
-  return testQuadTwoInputChip(SN74LS86);
+  return testQuadTwoInputChip(SN74LS86N);
 }
 
 
@@ -364,6 +412,7 @@ void refreshScreen(){
 }
 
 void printMainMenu(){
+  Serial.println("*************************************");
   Serial.println("Author: Kemuel Bermudez-Cotto");
   Serial.println("Date: 07/20/2026");
 
@@ -371,38 +420,138 @@ void printMainMenu(){
   Serial.println("* Logic Chips Tester v0  *");
   Serial.println("**************************");
 
+  Serial.println("*************************************");
+  Serial.println();
+  Serial.flush();
+
   printMenuOptions();
 }
 
+void displaySupportedChips();
+
+
+/**
+Returns a ChipMenuEntry object for a Two Input Chip
+*/
+ChipMenuEntry makeTwoInputEntry(const char* name, const QuadTwoInputChipConfig* config){
+  ChipMenuEntry entry;
+
+  entry.name = name;
+  entry.ctype = TWO_INPUT_CHIP;
+  entry.config.twoInput = config;
+
+  return entry;
+}
+
+/**
+Returns a ChipMenuEntry object for a One Input Chip
+*/
+ChipMenuEntry makeOneInputEntry(const char* name, const HexOneInputChipConfig* config){
+  ChipMenuEntry entry;
+
+  entry.name = name;
+  entry.ctype = ONE_INPUT_CHIP;
+  entry.config.oneInput = config;
+
+  return entry;
+}
+
+// Array to hold all chip entries for the Display Menu
+const ChipMenuEntry supportedChips[] = {
+  makeTwoInputEntry("SN74LS00N", &SN74LS00N),
+  makeTwoInputEntry("SN74LS02N", &SN74LS02N),  
+  makeOneInputEntry("SN74LS05N", &SN74LS05N),
+  makeTwoInputEntry("SN74LS08N", &SN74LS08N),
+  makeTwoInputEntry("SN74LS32N", &SN74LS32N),
+  makeTwoInputEntry("SN74LS86N", &SN74LS86N)
+  
+}; 
+
+bool testChipFromMenu(const ChipMenuEntry* entry){
+  
+  switch (entry->ctype){
+    case TWO_INPUT_CHIP:
+      return testQuadTwoInputChip(*entry->config.twoInput);
+      break;
+    
+    case ONE_INPUT_CHIP:
+      return testHexOneInputChip(*entry->config.oneInput);
+      break;
+    default:
+      Serial.println("Unsupported chip type");
+      return false;
+  }
+}
+
+void displaySupportedChips(){
+
+  int n = sizeof(supportedChips)/ sizeof(supportedChips[0]);
+
+  for (int i=0; i < n; i++){
+    Serial.print(i +1);
+    Serial.print(". ");
+    Serial.println(supportedChips[i].name);
+  }
+}
+
+
 void printMenuOptions(){
 
-  int8_t selectedOption = -1;
+  int selectedOption = -1;
 
-  while (selectedOption != 0){
+  while (selectedOption != 3){
     Serial.println("Options:");
     Serial.println("1. Test known chip");
     Serial.println("2. Test unknown chip (NOT IMPLEMENTED)");
     Serial.println("3. Exit Program");
     Serial.println();
-    Serial.println("Selected Option: ");
-    Serial.flush();
-
-
-    selectedOption = Serial.parseInt();
-
+    Serial.println("Selected Option: \n");
+    
     if (selectedOption != 1 && selectedOption != 2 && selectedOption != 3){
       Serial.println("The value provided is not valid");
       Serial.print("Value: ");
       Serial.println(selectedOption);
-      break;
+      Serial.println();
     }
+
     if (selectedOption == 1){
       displaySupportedChips();
+    
+      unsigned int selectedChipOption = Serial.parseInt();
+
+      switch (selectedChipOption){
+        case 1:
+          Serial.println(testChipFromMenu(&supportedChips[0]));
+          break;
+        
+        case 2:
+          Serial.println(testChipFromMenu(&supportedChips[1]));
+          break;
+
+        case 3:
+          Serial.println(testChipFromMenu(&supportedChips[2]));
+          break;
+
+        case 4:
+          Serial.println(testChipFromMenu(&supportedChips[3]));
+          break;
+
+        case 5:
+          Serial.println(testChipFromMenu(&supportedChips[4]));
+          break;
+
+        case 6:
+          Serial.println(testChipFromMenu(&supportedChips[5]));
+          break;
+
+        default:
+          Serial.println("Chip not available for testing");
+          break;
+      }
     }
 
     if (selectedOption == 2){
-      Serial.println("Featured not developed yet ;(");
-      break;
+      Serial.println("Featured not implemented\n");
     }
     if (selectedOption == 3){
       Serial.println("Program Exiting...");
@@ -410,11 +559,4 @@ void printMenuOptions(){
       }
     }
   }
-}
-
-void displaySupportedChips(){
-
-
-
-
 }
